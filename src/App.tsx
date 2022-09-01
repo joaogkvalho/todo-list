@@ -1,5 +1,5 @@
 import { PlusCircle } from "phosphor-react"
-import { ChangeEvent, FormEvent, useEffect, useState } from "react"
+import { ChangeEvent, FormEvent, useState } from "react"
 import { EmptyTaskList } from "./components/EmptyTaskList"
 import { Header } from "./components/Header"
 import { TaskList } from "./components/TaskList"
@@ -14,6 +14,8 @@ function App() {
   const [taskList, setTaskList] = useState<Task[]>([])
   const [task, setTask] = useState('')
 
+  const [completedTasksCount, setCompletedTasksCount] = useState(0)
+
   function handleAddTask(event: FormEvent){
     if(task){
       event.preventDefault()
@@ -24,8 +26,7 @@ function App() {
         isComplete: false
       }
 
-      setTaskList([...taskList, newTask])
-      localStorage.setItem('@tasksList', JSON.stringify(taskList))
+      setTaskList([...taskList, newTask])      
       
       setTask('')
     }
@@ -39,8 +40,19 @@ function App() {
     const tasksWithCompletedTasks = taskList.map(task => 
       task.id === taskId ? {...task, isComplete: !task.isComplete} : task
     )
-
+    
     setTaskList(tasksWithCompletedTasks)
+    countCompletedTasks(taskId)
+  }
+
+  function countCompletedTasks(taskId: number){
+    for(const task of taskList){
+      if(task.id === taskId && !task.isComplete){
+       setCompletedTasksCount(completedTasksCount + 1)
+      } else if(task.id === taskId && completedTasksCount > 0){
+        setCompletedTasksCount(completedTasksCount - 1)
+      }
+    }
   }
 
   function deleteTask(taskToDelete: string){
@@ -48,17 +60,11 @@ function App() {
       return task.content != taskToDelete
     })
 
+    setCompletedTasksCount(completedTasksCount - 1)
     setTaskList(tasksWithoutDeletedTask)
   }
 
-  useEffect(() => {
-    const storageTasksList = JSON.parse(localStorage.getItem('@tasksList') as string)
 
-    // if(storageTasksList){
-    //   setTaskList(storageTasksList)
-    // }
-  }, [])
- 
   return (
     <div className="w-full h-full">
       <Header />
@@ -101,7 +107,10 @@ function App() {
           <p className="text-purple-300 font-bold">
             Concluídas
             <span className="text-gray-200 bg-gray-400 ml-2 px-3 py-[0.20rem] rounded-full">
-              0
+              {completedTasksCount > 0 
+                ? (`${completedTasksCount} de ${taskList.length}`)
+                : 0
+              }
             </span>
           </p>
         </div>
